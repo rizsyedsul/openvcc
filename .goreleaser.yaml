@@ -1,0 +1,90 @@
+version: 2
+
+project_name: openvcc
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: openvcc
+    main: ./cmd/openvcc
+    binary: openvcc
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: openvcc
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files: [LICENSE*, README.md, CHANGELOG.md, instructions.md]
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot"
+
+dockers:
+  - image_templates:
+      - "ghcr.io/syedsumx/openvcc:{{ .Version }}-amd64"
+      - "ghcr.io/syedsumx/openvcc:latest-amd64"
+    use: buildx
+    goarch: amd64
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --label=org.opencontainers.image.source={{ .GitURL }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.version={{ .Version }}
+  - image_templates:
+      - "ghcr.io/syedsumx/openvcc:{{ .Version }}-arm64"
+      - "ghcr.io/syedsumx/openvcc:latest-arm64"
+    use: buildx
+    goarch: arm64
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - --platform=linux/arm64
+      - --label=org.opencontainers.image.source={{ .GitURL }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.version={{ .Version }}
+
+docker_manifests:
+  - name_template: "ghcr.io/syedsumx/openvcc:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/syedsumx/openvcc:{{ .Version }}-amd64"
+      - "ghcr.io/syedsumx/openvcc:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/syedsumx/openvcc:latest"
+    image_templates:
+      - "ghcr.io/syedsumx/openvcc:latest-amd64"
+      - "ghcr.io/syedsumx/openvcc:latest-arm64"
+
+sboms:
+  - artifacts: archive
+
+signs:
+  - cmd: cosign
+    args:
+      - sign-blob
+      - --yes
+      - --output-signature=${signature}
+      - ${artifact}
+    artifacts: checksum
+    output: true
+
+docker_signs:
+  - cmd: cosign
+    args: ['sign', '--yes', '${artifact}@${digest}']
+    artifacts: manifests
+    output: true
+
+changelog:
+  use: github-native

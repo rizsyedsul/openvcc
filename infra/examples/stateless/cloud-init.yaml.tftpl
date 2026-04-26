@@ -1,0 +1,11 @@
+#cloud-config
+package_update: true
+packages:
+  - docker.io
+runcmd:
+  - systemctl enable --now docker
+  - >
+    docker run -d --restart=always --name=echo
+    -p ${app_port}:8000
+    -e CLOUD=$(cloud-init query -f '{ds.meta_data.cloud_name}' 2>/dev/null || echo unknown)
+    ${image}

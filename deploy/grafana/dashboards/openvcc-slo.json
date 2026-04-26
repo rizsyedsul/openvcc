@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 39,
+  "title": "Open VCC — SLO",
+  "uid": "openvcc-slo",
+  "tags": ["openvcc", "slo"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {"from": "now-24h", "to": "now"},
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Availability (success ratio, 24h)",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(rate(openvcc_requests_total{code!~\"5..\"}[24h])) / clamp_min(sum(rate(openvcc_requests_total[24h])), 1)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "red"},
+              {"value": 0.99, "color": "yellow"},
+              {"value": 0.995, "color": "green"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "p99 latency (24h)",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 0},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(openvcc_request_duration_seconds_bucket[24h])))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": null, "color": "green"},
+              {"value": 0.5, "color": "yellow"},
+              {"value": 1.0, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Egress (last 1h, by cloud)",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 0},
+      "targets": [
+        {
+          "expr": "sum by (cloud) (rate(openvcc_egress_bytes_total[1h]) * 3600)",
+          "refId": "A",
+          "legendFormat": "{{cloud}}"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "bytes"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Error budget burn (24h rolling)",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 6},
+      "targets": [
+        {
+          "expr": "sum(rate(openvcc_requests_total{code=~\"5..\"}[5m])) / clamp_min(sum(rate(openvcc_requests_total[5m])), 1)",
+          "refId": "A",
+          "legendFormat": "5xx ratio"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "percentunit"}
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Backend EWMA latency by cloud",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14},
+      "targets": [
+        {
+          "expr": "openvcc_backend_latency_ema_seconds",
+          "refId": "A",
+          "legendFormat": "{{backend}} ({{cloud}})"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}}
+    }
+  ]
+}

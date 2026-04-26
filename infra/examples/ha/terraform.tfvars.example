@@ -1,0 +1,16 @@
+name           = "openvcc-ha"
+ssh_public_key = "ssh-ed25519 AAAAC3Nz... user@host"
+ingress_cidrs  = ["1.2.3.4/32"]
+
+aws_region   = "us-east-1"
+azure_region = "eastus"
+
+app_instance_size           = "t3.small"
+azure_app_instance_size     = "Standard_B2s"
+engine_instance_size        = "t3.small"
+azure_engine_instance_size  = "Standard_B2s"
+
+echo_image   = "ghcr.io/syedsumx/openvcc-echo:latest"
+engine_image = "ghcr.io/syedsumx/openvcc:latest"
+
+admin_token = "change-me-please"

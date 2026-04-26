@@ -1,0 +1,42 @@
+# Binaries
+/openvcc
+/dist/
+*.exe
+*.test
+*.out
+
+# Go
+/vendor/
+*.prof
+coverage.txt
+coverage.html
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Local config / secrets
+*.local.yaml
+*.local.yml
+.env
+.env.*
+!.env.example
+
+# OpenTofu / Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+
+# Compose / runtime
+docker-compose.override.yaml
+docker-compose.override.yml
+/examples/echo/echo
+/examples/notes/notes

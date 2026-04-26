@@ -1,0 +1,22 @@
+#cloud-config
+# Azure-side bootstrap: joins the CockroachDB cluster started on the AWS VM
+# and runs a local notes-app container that talks to the local CRDB node.
+package_update: true
+packages:
+  - docker.io
+runcmd:
+  - systemctl enable --now docker
+  - >
+    docker run -d --restart=always --name=crdb
+    -p 26257:26257 -p 8080:8080
+    -v /var/lib/cockroach:/cockroach/cockroach-data
+    ${crdb_image} start --insecure --join=${join_addr}:26257
+    --advertise-addr=$(curl -s -H "Metadata: true" "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2021-12-13&format=text")
+  - sleep 8
+  - >
+    docker run -d --restart=always --name=notes
+    -p 8000:8000
+    -e CLOUD=azure
+    -e DSN="postgresql://root@127.0.0.1:26257/defaultdb?sslmode=disable"
+    --link crdb:crdb
+    ${notes_image}

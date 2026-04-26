@@ -1,0 +1,11 @@
+name           = "openvcc-stateful"
+ssh_public_key = "ssh-ed25519 AAAAC3Nz... user@host"
+ingress_cidrs  = ["1.2.3.4/32"]
+
+aws_region          = "us-east-1"
+azure_region        = "eastus"
+aws_instance_size   = "t3.medium"
+azure_instance_size = "Standard_B2ms"
+
+notes_image = "ghcr.io/syedsumx/openvcc-notes:latest"
+crdb_image  = "cockroachdb/cockroach:v24.2.4"

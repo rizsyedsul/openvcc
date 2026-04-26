@@ -1,0 +1,17 @@
+#cloud-config
+write_files:
+  - path: /etc/openvcc/openvcc.yaml
+    permissions: "0644"
+    content: |
+${indent(6, openvcc_yaml)}
+package_update: true
+packages:
+  - docker.io
+runcmd:
+  - systemctl enable --now docker
+  - >
+    docker run -d --restart=always --name=openvcc
+    -p 80:8080 -p 9090:9090 -p 8081:8081
+    -e OPENVCC_ADMIN_TOKEN=${admin_token}
+    -v /etc/openvcc:/etc/openvcc:ro
+    ${image} engine serve --config=/etc/openvcc/openvcc.yaml

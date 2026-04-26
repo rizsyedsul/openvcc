@@ -1,0 +1,36 @@
+listen:
+  proxy: :8080
+  metrics: :9090
+  admin:   :8081
+
+admin:
+  bearer_token_env: OPENVCC_ADMIN_TOKEN
+
+backends:
+  - name: aws
+    url: ${aws_url}
+    cloud: aws
+    region: ${aws_region}
+    weight: 1
+  - name: azure
+    url: ${azure_url}
+    cloud: azure
+    region: ${azure_region}
+    weight: 1
+
+health:
+  interval: 5s
+  timeout: 2s
+  path: /healthz
+  unhealthy_threshold: 2
+  healthy_threshold: 2
+
+strategy: weighted_round_robin
+
+proxy:
+  request_timeout: 30s
+  max_idle_conns_per_host: 64
+
+log:
+  level: info
+  format: json

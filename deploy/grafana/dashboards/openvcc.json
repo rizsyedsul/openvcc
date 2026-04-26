@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 39,
+  "title": "Open VCC",
+  "uid": "openvcc",
+  "tags": ["openvcc"],
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": {"from": "now-15m", "to": "now"},
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Requests per second by cloud",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum by (cloud) (rate(openvcc_requests_total[1m]))",
+          "legendFormat": "{{cloud}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []}
+    },
+    {
+      "type": "stat",
+      "title": "Active backends",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "targets": [
+        {"expr": "openvcc_active_backends", "refId": "A"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Backend up (1=healthy, 0=unhealthy)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "openvcc_backend_up",
+          "legendFormat": "{{backend}} ({{cloud}})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {"defaults": {"min": 0, "max": 1}, "overrides": []}
+    },
+    {
+      "type": "timeseries",
+      "title": "p95 request duration by cloud",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (cloud, le) (rate(openvcc_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{cloud}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []}
+    },
+    {
+      "type": "timeseries",
+      "title": "Proxy errors per second by kind",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "targets": [
+        {
+          "expr": "sum by (kind, cloud) (rate(openvcc_proxy_errors_total[1m]))",
+          "legendFormat": "{{cloud}} / {{kind}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+groups:
+  - name: openvcc.availability
+    interval: 30s
+    rules:
+      - alert: OpenVCCNoActiveBackends
+        expr: openvcc_active_backends < 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Open VCC has no healthy backends"
+          description: |
+            All backends fronted by openvcc have been unhealthy for the
+            last 5 minutes. Every request is currently 502'ing. Check
+            openvcc_backend_up to identify which side is down.
+          runbook: "https://github.com/syedsumx/openvcc/blob/main/docs/failure-modes.md#total-backend-outage"
+
+      - alert: OpenVCCSingleCloudOnly
+        expr: count(openvcc_backend_up == 1) by (cloud) < count(openvcc_backend_up) by (cloud)
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.cloud }} cloud has unhealthy backends for 10m"
+          description: |
+            One or more backends in {{ $labels.cloud }} have been
+            unhealthy for 10 minutes. Multi-cloud HA is degraded.
+
+  - name: openvcc.errors
+    interval: 30s
+    rules:
+      - alert: OpenVCCHighErrorRate
+        expr: |
+          sum by (cloud) (rate(openvcc_proxy_errors_total[5m]))
+            /
+          clamp_min(sum by (cloud) (rate(openvcc_requests_total[5m])), 1)
+            > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Sustained >5% proxy-error rate to {{ $labels.cloud }}"
+          description: |
+            More than 5% of requests routed to {{ $labels.cloud }} are
+            failing at the proxy layer for 5 minutes.
+
+      - alert: OpenVCCHigh5xx
+        expr: |
+          sum by (cloud) (rate(openvcc_requests_total{code=~"5.."}[5m]))
+            /
+          clamp_min(sum by (cloud) (rate(openvcc_requests_total[5m])), 1)
+            > 0.02
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.cloud }} sustained >2% 5xx for 10m"
+
+  - name: openvcc.latency
+    interval: 30s
+    rules:
+      - alert: OpenVCCHighP99
+        expr: |
+          histogram_quantile(0.99,
+            sum by (cloud, le) (rate(openvcc_request_duration_seconds_bucket[5m]))
+          ) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.cloud }} p99 > 1s for 10m"
+
+  - name: openvcc.cost
+    interval: 1m
+    rules:
+      - alert: OpenVCCEgressBudgetExhausted
+        expr: |
+          rate(openvcc_egress_bytes_total[1m]) * 60 > 5 * 1024 * 1024 * 1024
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.cloud }} egress > 5 GB/min for 2m"
+          description: |
+            Cross-cloud egress is sustained above the 5 GB/min budget
+            documented in the cost-aware routing section. The
+            cost_bounded_least_latency strategy will start filtering
+            this cloud out of selection.

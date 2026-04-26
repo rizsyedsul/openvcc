@@ -1,0 +1,20 @@
+#cloud-config
+# AWS-side bootstrap: starts the CockroachDB cluster (--init) and the notes app.
+package_update: true
+packages:
+  - docker
+runcmd:
+  - systemctl enable --now docker
+  - >
+    docker run -d --restart=always --name=crdb
+    -p 26257:26257 -p 8080:8080
+    -v /var/lib/cockroach:/cockroach/cockroach-data
+    ${crdb_image} start-single-node --insecure --advertise-addr=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+  - sleep 8
+  - >
+    docker run -d --restart=always --name=notes
+    -p 8000:8000
+    -e CLOUD=aws
+    -e DSN="postgresql://root@127.0.0.1:26257/defaultdb?sslmode=disable"
+    --link crdb:crdb
+    ${notes_image}

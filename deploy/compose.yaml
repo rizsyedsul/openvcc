@@ -1,0 +1,72 @@
+name: openvcc-demo
+
+services:
+  app-aws:
+    build:
+      context: ..
+      dockerfile: examples/echo/Dockerfile
+    environment:
+      LISTEN: ":8000"
+      CLOUD: aws
+      REGION: us-east-1
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+
+  app-azure:
+    build:
+      context: ..
+      dockerfile: examples/echo/Dockerfile
+    environment:
+      LISTEN: ":8000"
+      CLOUD: azure
+      REGION: eastus
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+
+  openvcc:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    depends_on:
+      - app-aws
+      - app-azure
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+      - "8081:8081"
+    environment:
+      OPENVCC_ADMIN_TOKEN: dev-admin-token-change-me
+    volumes:
+      - ./compose.openvcc.yaml:/etc/openvcc/openvcc.yaml:ro
+    command: ["engine", "serve", "--config=/etc/openvcc/openvcc.yaml"]
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    depends_on:
+      - openvcc
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus/scrape.yaml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yaml:/etc/prometheus/alerts.yaml:ro
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro

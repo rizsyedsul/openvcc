@@ -1,0 +1,30 @@
+[Unit]
+Description=Open VCC engine
+Documentation=https://github.com/syedsumx/openvcc
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=openvcc
+Group=openvcc
+EnvironmentFile=-/etc/openvcc/openvcc.env
+ExecStart=/usr/local/bin/openvcc engine serve --config=/etc/openvcc/openvcc.yaml
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=
+
+[Install]
+WantedBy=multi-user.target
