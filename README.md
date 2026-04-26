@@ -1,5 +1,7 @@
 # Open VCC
 
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 **Open-source Virtual Cloud Connector for VM workloads.**
 
 Open VCC gives you a working AWS + Azure deployment in one command: opinionated OpenTofu modules with a matched I/O contract, a custom Go engine that load-balances across clouds with first-class cloud awareness, and reference apps (stateless and stateful) so you can prove the path end-to-end before adopting it.
@@ -68,4 +70,4 @@ See `CONTRIBUTING.md`. Bug reports and feature ideas go in GitHub Issues. AI cod
 
 ## License
 
-Not yet set. To be added before v0.1.0 release.
+Apache-2.0 — see [LICENSE](LICENSE).
