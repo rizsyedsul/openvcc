@@ -1,4 +1,4 @@
-module github.com/syedsumx/openvcc
+module github.com/rizsyedsul/openvcc
 
 go 1.25.0
 
